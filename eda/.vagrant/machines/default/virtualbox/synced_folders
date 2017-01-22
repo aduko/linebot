@@ -1,0 +1,1 @@
+{"virtualbox":{"/var/www/html":{"mount_options":["dmode=777","fmode=666"],"guestpath":"/var/www/html","hostpath":"/Users/masaakieda/Development/etc/line_bot_awards/www","disabled":false,"__vagrantfile":true},"/vagrant":{"guestpath":"/vagrant","hostpath":"/Users/masaakieda/Development/etc/line_bot_awards","disabled":false,"__vagrantfile":true}}}
