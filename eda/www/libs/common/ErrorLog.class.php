@@ -24,7 +24,8 @@ class ErrorLog{
   public function saveDB($result,$file_path,$line_number){
 
     // DB登録
-    $insert['url']           = $_SERVER['HTTP_HOST'].$_SERVER['REQUEST_URI'];
+    $insert['url']           = "";
+//    $insert['url']           = $_SERVER['HTTP_HOST'].$_SERVER['REQUEST_URI'];
     $insert['file_path']     = $file_path;
     $insert['line_number']   = $line_number;
     $insert['error_content'] = serialize($result);

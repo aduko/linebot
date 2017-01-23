@@ -20,6 +20,13 @@ class ScheduleDAO {
   // DBテーブル非存在フィールド設定
   public $unset_key = array("submit", "file", "csrf_token");
 
+  public $question = array(
+    0 => array('title' => '今から', 'limit' => 5),
+    1 => array('title' => '今日の夜', 'limit' => 5),
+    2 => array('title' => '今週末', 'limit' => 5),
+    3 => array('title' => '今月末', 'limit' => 5),
+  );
+
   /**
    * 初期化
    */
@@ -132,6 +139,108 @@ class ScheduleDAO {
     return $result;
 
   }
+
+  /**
+   * 集計
+   */
+  public function aggregationAndNotification($status){
+
+    // 1分前の時刻を計算
+    $before_date = date("Y-m-d H:i:s", strtotime("-1 minute"));
+
+    // max(id)
+    $sql = "SELECT max(id) as max FROM {$this->tablename} WHERE flg = 1";
+    $max_id = $this->mdb2->queryRow($sql)['max'];
+
+//    $last_id = $this->mdb2->lastInsertID();
+    $sql_where_add = " AND status = 0 AND created_at < '$before_date' AND id = {$max_id}";
+
+    $sql = "SELECT * FROM {$this->tablename} WHERE flg = 1 {$sql_where_add} ORDER BY id DESC limit 1";
+    echo 'input $sql:';print_r($sql);echo "<br />";
+
+//    syslog(LOG_EMERG, print_r($sql, true));
+
+    $result = $this->mdb2->queryAll($sql);
+    echo 'input $result:';print_r($result);echo "<br />";
+
+
+    if(PEAR::isError($result)){
+      $this->elObj->saveDB($result,__FILE__,__LINE__);
+    }else{
+
+      foreach((array)$result as $key => $val){
+
+        // データ変換
+        $result[$key]['data'] = json_decode($result[$key]['data'], true);
+        echo 'input $result[$key][\'data\']:';print_r($result[$key]['data']);echo "<br />";
+
+        // 集計
+        $summary = array(
+          'q0' => 0,
+          'q1' => 0,
+          'q2' => 0,
+          'q3' => 0,
+        );
+        foreach($result[$key]['data'] as $key2 => $val2){
+
+          foreach($summary as $key3 => $val3){
+//            if(preg_match('/^p/', $key3) && $result[$key]['data'][$key2][$key3]){
+            if(in_array($key3, array_keys($summary)) && $result[$key]['data'][$key2][$key3] == "true"){
+
+//              var_dump($result[$key]['data'][$key2][$key3]);echo "<br />";
+              $summary[$key3]++;
+            }
+          }
+        }
+
+        // 最大値取得
+        arsort($summary);
+        reset($summary);
+        $max_question = key($summary);
+        print_r($summary);
+
+
+        // パラメータ設定
+        $result[$key]['result'] = $max_question;
+        $result[$key]['status']++;
+
+        // DB格納
+        $result[$key]['data'] = json_encode($result[$key]['data']);
+        $this->update($result[$key]);
+
+        // 通知
+        $LineBotDAO = new LineBotDAO;
+        $members = $LineBotDAO->getMemberList($result[$key]['keyword']);
+
+        // 結果格納
+        $q_index = substr($result[$key]['result'], -1, 1);
+        echo 'input $q_index:';print_r($q_index);echo "<br />";
+        print_r($q_index);
+        print_r($members);
+
+        $rep_message = "じゃあ、{$this->question[$q_index]['title']}で！";
+        if($summary[$max_question] == 1){
+          $rep_message = "じゃあ、{$this->question[$q_index]['title']}で！（一人飲みでw）";
+        }
+
+        // 全員: メッセージ送信
+        foreach((array)$members as $key3 => $val3) {
+
+          // パマラータ設定(回答リスト)
+
+
+          // 送信
+          $LineBotDAO->pushMessage($members[$key3]['userid'], $rep_message);
+
+        }
+
+      }
+
+    }
+
+    return $result;
+  }
+
 
   /**
    * 個別取得

@@ -17,6 +17,8 @@ CREATE TABLE IF NOT EXISTS `lba_schedule` (
   `id` bigint(20) unsigned NOT NULL,
   `keyword` varchar(200) DEFAULT NULL,
   `data` text DEFAULT NULL,
+  `status` tinyint(3) unsigned DEFAULT '0',
+  `result` varchar(20) DEFAULT NULL,
   `created_at` datetime DEFAULT NULL,
   `created_by` varchar(200) DEFAULT NULL,
   `updated_at` datetime DEFAULT NULL,

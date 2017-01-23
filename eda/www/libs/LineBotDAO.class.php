@@ -154,11 +154,11 @@ class LineBotDAO {
 
   }
 
-  public function getGroup($keyword){
+  public function getGroupList(){
 
-    $sql_where_add = " AND keyword = '{$keyword}'";
+    $sql_where_add = "";
 
-    $sql = "SELECT * FROM {$this->tablename} WHERE flg = 1 {$sql_where_add} ORDER BY userid DESC";
+    $sql = "SELECT DISTINCT  keyword FROM {$this->tablename} WHERE flg = 1 {$sql_where_add}";
     syslog(LOG_EMERG, print_r($sql, true));
 
     $result = $this->mdb2->queryAll($sql);
@@ -170,7 +170,7 @@ class LineBotDAO {
     return $result;
   }
 
-  public function getGroupList($keyword){
+  public function getMemberList($keyword){
 
     $sql_where_add = " AND keyword = '{$keyword}'";
 
